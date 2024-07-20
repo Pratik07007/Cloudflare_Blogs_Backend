@@ -10,6 +10,21 @@ const app = new Hono<{
     JWT_SECRET: string;
   };
 }>();
+//middlewares
+
+app.use("/api/v1/blog/*", async (c, next) => {
+  const token: string = c.req.header("authorization") || "";
+  try {
+    const resp = await verify(token, c.env.JWT_SECRET);
+    if (resp.id) {
+      await next();
+    } else {
+      return c.json("unauthorized, please login to continue");
+    }
+  } catch (error) {
+    return c.json({ msg: "unauthorized, please login to continue" });
+  }
+});
 
 app.post("/api/v1/signup", async (c) => {
   const prisma = new PrismaClient({
@@ -25,7 +40,7 @@ app.post("/api/v1/signup", async (c) => {
         password,
       },
     });
-    const token = await sign({ id: user.id }, c.env.JWT_SECRET);
+    const token: string = (await sign({ id: user.id }, c.env.JWT_SECRET)) || "";
     return c.json({ msg: "user created succesfully", token });
   } catch (error) {
     return c.json({ msg: "user creation failed" });
@@ -47,9 +62,20 @@ app.post("/api/v1/signin", async (c) => {
     if (userFound === null) {
       return c.json({ msg: "Invalid Credentials" });
     }
-    const token = await sign({ id: userFound.id }, c.env.JWT_SECRET);
+    const token: string =
+      (await sign({ id: userFound.id }, c.env.JWT_SECRET)) || "";
     return c.json({ msg: "user signed in succesfully", token });
   } catch (error) {}
+});
+
+app.get("/api/v1/blog", async (c) => {
+  return c.text("authorized from get")
+});
+app.post("/api/v1/blog/hello", async (c) => {
+  return c.text("authorized from post")
+});
+app.put("/api/v1/blog/:id", async (c) => {
+  return c.text("authorized from put")
 });
 
 export default app;
