@@ -31,26 +31,27 @@ authRouter.post("/signup", async (c) => {
   }
 });
 
-
 authRouter.post("/signin", async (c) => {
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate());
-    const { email, password } = await c.req.json();
-    try {
-      const userFound = await prisma.user.findFirst({
-        where: {
-          email,
-          password,
-        },
-      });
-      if (userFound === null) {
-        return c.json({ msg: "Invalid Credentials" });
-      }
-      const token: string =
-        (await sign({ id: userFound.id }, c.env.JWT_SECRET)) || "";
-      return c.json({ msg: "user signed in succesfully", token });
-    } catch (error) {}
-  });
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+  const { email, password } = await c.req.json();
+  try {
+    const userFound = await prisma.user.findFirst({
+      where: {
+        email,
+        password,
+      },
+    });
+    if (userFound === null) {
+      return c.json({ msg: "Invalid Credentials" });
+    }
+    const token: string =
+      (await sign({ id: userFound.id }, c.env.JWT_SECRET)) || "";
+    return c.json({ msg: "user signed in succesfully", token });
+  } catch (error) {
+    return c.json({ msg: "user sign in failed" });
+  }
+});
 
 export default authRouter;
