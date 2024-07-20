@@ -32,4 +32,24 @@ app.post("/api/v1/signup", async (c) => {
   }
 });
 
+app.post("/api/v1/signin", async (c) => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+  const { email, password } = await c.req.json();
+  try {
+    const userFound = await prisma.user.findFirst({
+      where: {
+        email,
+        password,
+      },
+    });
+    if (userFound === null) {
+      return c.json({ msg: "Invalid Credentials" });
+    }
+    const token = await sign({ id: userFound.id }, c.env.JWT_SECRET);
+    return c.json({ msg: "user signed in succesfully", token });
+  } catch (error) {}
+});
+
 export default app;
