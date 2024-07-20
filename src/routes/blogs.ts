@@ -60,6 +60,17 @@ blogRouter.get("single/:id", async (c) => {
     where: {
       id,
     },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      author: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    },
   });
 
   return c.json(singleBlog);
@@ -72,7 +83,6 @@ blogRouter.put("/", async (c) => {
   const { id, title, content } = await c.req.json();
   try {
     await prisma.post.update({
-      // @ts-ignore  //didn't get a better way to fix this, still learning typescript
       where: {
         id,
       },
@@ -91,7 +101,19 @@ blogRouter.get("/all", async (c) => {
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
-  const blogs = await prisma.post.findMany();
+  const blogs = await prisma.post.findMany({
+    select: {
+      content: true,
+      title: true,
+      id: true,
+      author: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    },
+  });
   return c.json(blogs);
 });
 
